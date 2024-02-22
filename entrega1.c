@@ -8,15 +8,17 @@
 #include <ctype.h>
 
 // Estructura para el CPU
-typedef struct {
+struct PCB
+{
+    char IR[100];
     int AX;
     int BX;
     int CX;
     int DX;
     int PC;
-    char IR[100];
     char LineaLeida[100];
-} PCB;
+};
+
 
 void Prompt(WINDOW *comandos, int linea, char *comando) {
     mvwprintw(comandos, linea + 1, 2, "%d>> %s", linea, comando);
@@ -28,7 +30,7 @@ void Mensajes(WINDOW *mensajes, char *mensaje) {
     wrefresh(mensajes);
 }
 
-void Registros(WINDOW *registros, PCB *pcb) {
+void Registros(WINDOW *registros, struct PCB *pcb) {
     
     mvwprintw(registros, 2, 10, "AX: %d        ", pcb->AX);
     mvwprintw(registros, 2, 25, "BX: %d        ", pcb->BX);
@@ -37,10 +39,11 @@ void Registros(WINDOW *registros, PCB *pcb) {
     mvwprintw(registros, 6, 10, "PC: %d        ", pcb->PC);
     mvwprintw(registros, 6, 25, "IR: %s        ", pcb->IR);
     mvwprintw(registros, 8, 10, "Linea leida: %s       ", pcb->LineaLeida);
+    mvwprintw(registros, 8, 25 + strlen(pcb->LineaLeida), "\0"); // Agregar terminador de cadena
     wrefresh(registros);
 }
 
-int Errores(WINDOW *mensajes, int codigoError, char *comando, int *j, PCB *pcb) {
+int Errores(WINDOW *mensajes, int codigoError, char *comando, int *j, struct PCB *pcb) {
     if (codigoError == 104) {
         Mensajes(mensajes,"                                                                        ");
         Mensajes(mensajes, "Saliendo del programa...");
@@ -82,6 +85,16 @@ int Errores(WINDOW *mensajes, int codigoError, char *comando, int *j, PCB *pcb) 
         memset(comando, 0, sizeof(comando)); // Limpiar el comando 
         *j = 0; // Reiniciar el contador de caracteres
     }
+
+    if (codigoError == 111) {
+        char Frase[100] = "Error: Se leyó el archivo, pero no hay END";
+        strcat(Frase, comando);
+        Mensajes(mensajes,"                                                                        ");
+        Mensajes(mensajes, Frase);
+        memset(comando, 0, sizeof(comando)); // Limpiar el comando 
+
+        *j = 0; // Reiniciar el contador de caracteres
+    }
     //--------------------------------------------------------------------------------
 
 
@@ -104,7 +117,7 @@ int Errores(WINDOW *mensajes, int codigoError, char *comando, int *j, PCB *pcb) 
 }
 
 
-int ErroresInstrucciones(WINDOW *mensajes, int codigoError, PCB *pcb) {
+int ErroresInstrucciones(WINDOW *mensajes, int codigoError, struct PCB *pcb) {
     if (codigoError == 107) {
         char Frase[100] = "Error: Instrucción no reconocida ";
         strcat(Frase, pcb->IR);
@@ -129,7 +142,7 @@ int ErroresInstrucciones(WINDOW *mensajes, int codigoError, PCB *pcb) {
 //================================= MOUSEKEHERRAMIENTAS MISTERIOSAS =================================
 
 //================================= CONVERSOR DE STRINGS =================================
-int ConversorStrings(WINDOW *mensajes, char *valor, PCB *pcb) {
+int ConversorStrings(WINDOW *mensajes, char *valor, struct PCB *pcb) {
     int valor_numerico = 0;
     int codigoError = 0;
     if (isdigit(valor[0]) || (valor[0] == '-' && isdigit(valor[1]))) {
@@ -181,7 +194,7 @@ int Mayusculainador(char *linea){
 
 
 //================================= OPERACIONES =================================
-int MOV(WINDOW *mensajes, char *registro, char *valor, PCB *pcb){
+int MOV(WINDOW *mensajes, char *registro, char *valor, struct PCB *pcb){
     int valor_numerico = ConversorStrings(mensajes, valor, pcb);
         if (strcmp(registro, "AX") == 0) pcb->AX = valor_numerico;
         else if (strcmp(registro, "BX") == 0) pcb->BX = valor_numerico;
@@ -189,7 +202,7 @@ int MOV(WINDOW *mensajes, char *registro, char *valor, PCB *pcb){
         else if (strcmp(registro, "DX") == 0) pcb->DX = valor_numerico;
 }
 
-int ADD(WINDOW *mensajes, char *registro, char *valor, PCB *pcb){
+int ADD(WINDOW *mensajes, char *registro, char *valor, struct PCB *pcb){
     int valor_numerico = ConversorStrings(mensajes, valor, pcb);
         if (strcmp(registro, "AX") == 0) pcb->AX += valor_numerico;
         else if (strcmp(registro, "BX") == 0) pcb->BX += valor_numerico;
@@ -197,7 +210,7 @@ int ADD(WINDOW *mensajes, char *registro, char *valor, PCB *pcb){
         else if (strcmp(registro, "DX") == 0) pcb->DX += valor_numerico;
 }
 
-int SUB(WINDOW *mensajes, char *registro, char *valor, PCB *pcb){
+int SUB(WINDOW *mensajes, char *registro, char *valor, struct PCB *pcb){
     int valor_numerico = ConversorStrings(mensajes, valor, pcb);
         if (strcmp(registro, "AX") == 0) pcb->AX -= valor_numerico;
         else if (strcmp(registro, "BX") == 0) pcb->BX -= valor_numerico;
@@ -205,7 +218,7 @@ int SUB(WINDOW *mensajes, char *registro, char *valor, PCB *pcb){
         else if (strcmp(registro, "DX") == 0) pcb->DX -= valor_numerico;
 }
 
-int MUL(WINDOW *mensajes, char *registro, char *valor, PCB *pcb){
+int MUL(WINDOW *mensajes, char *registro, char *valor, struct PCB *pcb){
     int valor_numerico = ConversorStrings(mensajes, valor, pcb);
         if (strcmp(registro, "AX") == 0) pcb->AX *= valor_numerico;
         else if (strcmp(registro, "BX") == 0) pcb->BX *= valor_numerico;
@@ -213,23 +226,29 @@ int MUL(WINDOW *mensajes, char *registro, char *valor, PCB *pcb){
         else if (strcmp(registro, "DX") == 0) pcb->DX *= valor_numerico;
 }
 
-int DIV(WINDOW *mensajes, char *registro, char *valor, PCB *pcb){
+int DIV(WINDOW *mensajes, char *registro, char *valor, struct PCB *pcb){
     int valor_numerico = ConversorStrings(mensajes, valor, pcb);
-            if (strcmp(registro, "AX") == 0) pcb->AX /= valor_numerico;
-            else if (strcmp(registro, "BX") == 0) pcb->BX /= valor_numerico;
+            if (valor_numerico == 0)
+            {
+                ErroresInstrucciones(mensajes, 108, pcb);
+                return 108;
+            }
+            
+            else if (strcmp(registro, "AX") == 0) pcb->AX /= valor_numerico;
+            else if (strcmp(registro, "BX") == 0) {printf("Valor numerico: %d\n", valor_numerico); pcb->BX /= valor_numerico; }
             else if (strcmp(registro, "CX") == 0) pcb->CX /= valor_numerico;
             else if (strcmp(registro, "DX") == 0) pcb->DX /= valor_numerico;
             
 }
 
-int INC(WINDOW *mensajes, char *registro, PCB *pcb){
+int INC(WINDOW *mensajes, char *registro, struct PCB *pcb){
     if (strcmp(registro, "AX") == 0) pcb->AX++;
         else if (strcmp(registro, "BX") == 0) pcb->BX++;
         else if (strcmp(registro, "CX") == 0) pcb->CX++;
         else if (strcmp(registro, "DX") == 0) pcb->DX++;
 }
 
-int DEC(WINDOW *mensajes, char *registro, PCB *pcb){
+int DEC(WINDOW *mensajes, char *registro, struct PCB *pcb){
     if (strcmp(registro, "AX") == 0) pcb->AX--;
         else if (strcmp(registro, "BX") == 0) pcb->BX--;
         else if (strcmp(registro, "CX") == 0) pcb->CX--;
@@ -239,7 +258,7 @@ int DEC(WINDOW *mensajes, char *registro, PCB *pcb){
 
 
 //================================= EJECUTAR INSTRUCCION =================================
-int EjecutarInstruccion(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *linea) {
+int EjecutarInstruccion(WINDOW *registros, WINDOW *mensajes, struct PCB *pcb, char *linea) {
     char instruccion[100], registro[100];
     char valor[100] = "";
     int codigoError = 0;
@@ -456,10 +475,11 @@ int EjecutarInstruccion(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *lin
          {
             DIV(mensajes, registro, valor, pcb);       
         }
+
+        
         // Si el valor es un registro, entonces se debe comprobar si es un registro válido
         // Si el registro es válido, entonces se puede hacer la operación
         else if (valor_numerico == 0) {
-
             if      (strcmp(valor, "AX") == 0) { valor_numerico = pcb->AX; DIV(mensajes, registro, valor, pcb);}
             else if (strcmp(valor, "BX") == 0) {valor_numerico = pcb->BX; DIV(mensajes, registro, valor, pcb);}
             else if (strcmp(valor, "CX") == 0) {valor_numerico = pcb->CX; DIV(mensajes, registro, valor, pcb);}
@@ -565,12 +585,12 @@ int EjecutarInstruccion(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *lin
 
     // No hay error
     pcb->PC++;
-    codigoError = 0;
+    codigoError = 103;
     return 0;
 }
 
 
-int LeerArchivo(WINDOW *registros,WINDOW *mensajes, PCB *pcb, FILE *archivo, char *linea) {
+int LeerArchivo(WINDOW *registros,WINDOW *mensajes, struct PCB *pcb, FILE *archivo, char *linea) {
     linea[strcspn(linea, "\n")] = '\0'; // Eliminar el salto de línea (Para que se vea bonito en el prompt)
         // Ejecutar la instrucción de la línea
         Mayusculainador(linea);
@@ -599,7 +619,7 @@ int LeerArchivo(WINDOW *registros,WINDOW *mensajes, PCB *pcb, FILE *archivo, cha
         return 1;
 }
 
-int Cargar(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *nombre_archivo, FILE **archivo) {
+int Cargar(WINDOW *registros, WINDOW *mensajes, struct PCB *pcb, char *nombre_archivo, FILE **archivo, char *linea) {
     if (nombre_archivo[0] == '\0') { // Esto significa que no se ingresó un nombre de archivo
         return 101;
     }
@@ -609,11 +629,17 @@ int Cargar(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *nombre_archivo, 
         return 102;
     }
 
+    else {
+                strcpy(pcb->IR, linea); 
+                Registros(registros, pcb);
+                ErroresInstrucciones(mensajes, 111, pcb);
+        return 111;}
+
     pcb->PC = 0; // Inicializar PC en 0
     return 0; // Regresar 0 significa que no hubo errores
 }
 
-int Enter(WINDOW *mensajes, WINDOW *registros, char *comando, PCB *pcb, FILE **archivo) {
+int Enter(WINDOW *mensajes, WINDOW *registros, char *comando, struct PCB *pcb, FILE **archivo,char *linea) {
     char cmd[100];
     int height, width;
     getmaxyx(stdscr, height, width);
@@ -623,8 +649,8 @@ int Enter(WINDOW *mensajes, WINDOW *registros, char *comando, PCB *pcb, FILE **a
     char param1[100] = ""; // Se inicializa con el caracter nulo para evitar que salgan cosas raras (basura)
     char param2[100] = ""; // Se inicializa con el caracter nulo para evitar que salgan cosas raras (basura)
     // -------------- SECCION DE COMANDOS ---------------
-    Mayusculainador(comando);
 
+    
     // ---- EXIT ----
     sscanf(comando, "%s", cmd); // Leer el comando (la primera palabra del comando)
     if ((strcmp(cmd, "SALIR") == 0) || (strcmp(cmd, "EXIT") == 0)){
@@ -635,7 +661,7 @@ int Enter(WINDOW *mensajes, WINDOW *registros, char *comando, PCB *pcb, FILE **a
     sscanf(comando, "%s", cmd); // Leer el comando
     if ((strcmp(cmd, "CARGAR") == 0) || (strcmp(cmd, "LOAD") == 0)){
         sscanf(comando, "%*s %s", param1); // Leer el primer parámetro
-        int resultado = Cargar(registros, mensajes, pcb, param1, archivo);
+        int resultado = Cargar(registros, mensajes, pcb, param1, archivo, linea);
         memset(comando, 0, sizeof(comando)); // Limpiar el comando
         return resultado;
     }
@@ -658,7 +684,7 @@ int Enter(WINDOW *mensajes, WINDOW *registros, char *comando, PCB *pcb, FILE **a
 }
 
 
-int LineaComandos(WINDOW *comandos, WINDOW *mensajes, WINDOW *registros, char *comando, int *j, int *linea, PCB *pcb, FILE **archivo) {
+int LineaComandos(WINDOW *comandos, WINDOW *mensajes, WINDOW *registros, char *comando, int *j, int *linea, struct PCB *pcb, FILE **archivo) {
     int caracter = 0;
 
     if (kbhit()) { // kbhit() devuelve 1 si se ha presionado una tecla y 0 si no
@@ -666,7 +692,7 @@ int LineaComandos(WINDOW *comandos, WINDOW *mensajes, WINDOW *registros, char *c
         if (caracter != ERR) { // Verificar si se presionó una tecla
             if (caracter == '\n') { // Verificar si la tecla fue Enter
                 comando[*j] = '\0'; // Finalizar el comando
-                int codigoError = Enter(mensajes, registros, comando, pcb, archivo);
+                int codigoError = Enter(mensajes, registros, comando, pcb, archivo, linea);
                 *j = 0; // Reiniciar el contador de caracteres
                 (*linea)++; // Incrementar el contador de líneas
                 
@@ -747,9 +773,8 @@ int main(void) {
     int j = 0; // Contador de caracteres
     int linea = 0; // Contador de líneas
 
-    PCB *pcb = (PCB*)malloc(sizeof(PCB)); // Reservar memoria para la estructura PCB
-    memset(pcb, 0, sizeof(PCB)); // Inicializar la estructura a 0
-   
+    struct PCB *pcb = malloc(sizeof(struct PCB)); // Reservar memoria para la estructura PCB
+    
     Prompt(comandos, linea, comando);
 
     Registros(registros, pcb);
@@ -791,7 +816,8 @@ int main(void) {
         
     }
 
-    free(pcb); // Liberar la memoria reservada para la estructura PCB
+    // Liberar la memoria reservada para la estructura PCB
+    //free(pcb);
     endwin();
     return 0;
 }
