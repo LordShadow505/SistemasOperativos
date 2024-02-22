@@ -7,6 +7,7 @@
 #include "kbhit.h"
 #include <ctype.h>
 
+int EstaLeyendo = 0;
 // Estructura para el CPU
 typedef struct {
     int AX;
@@ -506,11 +507,9 @@ int EjecutarInstruccion(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *lin
 
         else {
             // Si el registro no es válido, devuelve un error
-                strcpy(pcb->IR, linea); 
-                Registros(registros, pcb);
-                codigoError = 107;
-                ErroresInstrucciones(mensajes, codigoError, pcb);
-                return codigoError;
+            strcpy(pcb->IR, linea); 
+            Registros(registros, pcb);
+            
         }
 
     }
@@ -533,7 +532,8 @@ int EjecutarInstruccion(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *lin
 
         // Si el valor es un registro, entonces se debe comprobar si es un registro válido
         // Si el registro es válido, entonces se puede hacer la operación
-        
+
+
         if     (strcmp(registro, "AX") == 0) { DEC(mensajes, registro, pcb);}
         else if (strcmp(registro, "BX") == 0) { DEC(mensajes, registro, pcb);}
         else if (strcmp(registro, "CX") == 0) { DEC(mensajes, registro, pcb);}
@@ -541,11 +541,9 @@ int EjecutarInstruccion(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *lin
 
         else {
             // Si el registro no es válido, devuelve un error
-                strcpy(pcb->IR, linea); 
-                Registros(registros, pcb);
-                codigoError = 107;
-                ErroresInstrucciones(mensajes, codigoError, pcb);
-                return codigoError;
+            strcpy(pcb->IR, linea); 
+            Registros(registros, pcb);
+            
         }
 
     }
@@ -555,11 +553,9 @@ int EjecutarInstruccion(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *lin
     // ERROR
     else {
         // Si la instrucción no es válida, devuelve un error
-                strcpy(pcb->IR, linea); 
-                Registros(registros, pcb);
-                codigoError = 107;
-                ErroresInstrucciones(mensajes, codigoError, pcb);
-                return codigoError;
+        codigoError = 107;
+        ErroresInstrucciones(mensajes, codigoError, pcb);
+        return codigoError;
     }
 
     // No hay error
@@ -633,7 +629,7 @@ int Enter(WINDOW *mensajes, WINDOW *registros, char *comando, PCB *pcb, FILE **a
     sscanf(comando, "%s", cmd); // Leer el comando
     if ((strcmp(cmd, "cargar") == 0) || (strcmp(cmd, "load") == 0)){
         sscanf(comando, "%*s %s", param1); // Leer el primer parámetro
-        int resultado = Cargar(registros, mensajes, pcb, param1, archivo);
+        int resultado = Cargar(registros, mensajes, pcb, cmd, archivo);
         memset(comando, 0, sizeof(comando)); // Limpiar el comando
         return resultado;
     }
@@ -647,7 +643,7 @@ int Enter(WINDOW *mensajes, WINDOW *registros, char *comando, PCB *pcb, FILE **a
         pcb->DX = 0;
         pcb->PC = 0;
         strcpy(pcb->IR, "                      ");
-        strcpy(pcb->LineaLeida, "                a");
+        strcpy(pcb->LineaLeida, "                ");
         Registros(registros, pcb);
         return 110;
     }
@@ -752,9 +748,7 @@ int main(void) {
 
     Registros(registros, pcb);
     FILE *archivo = 0;
-    int y, x;
 
-    int i = 0;                
     while (1) {
         int codigoError = LineaComandos(comandos, mensajes, registros, comando, &j, &linea, pcb, &archivo);
         Prompt(comandos, linea, comando);
@@ -770,14 +764,12 @@ int main(void) {
         if (archivo != NULL) {
             char linea[100]; // Variable para almacenar la línea leída del archivo
             if (fgets(linea, 100, archivo) != NULL) { // Leer una línea del archivo
-                LeerArchivo(registros, mensajes, pcb, archivo, linea);
+                LeerArchivo(registros,mensajes, pcb, archivo, linea);
             } else { // Cerrar el archivo si ya no hay más líneas que leer
                 fclose(archivo);
                 archivo = NULL; // Igualar el puntero a null
             }
         }
-
-        
     }
 
     free(pcb); // Liberar la memoria reservada para la estructura PCB
