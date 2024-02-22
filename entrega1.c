@@ -29,13 +29,14 @@ void Mensajes(WINDOW *mensajes, char *mensaje) {
 }
 
 void Registros(WINDOW *registros, PCB *pcb) {
+    
     mvwprintw(registros, 2, 10, "AX: %d        ", pcb->AX);
     mvwprintw(registros, 2, 25, "BX: %d        ", pcb->BX);
     mvwprintw(registros, 4, 10, "CX: %d        ", pcb->CX);
     mvwprintw(registros, 4, 25, "DX: %d        ", pcb->DX);
     mvwprintw(registros, 6, 10, "PC: %d        ", pcb->PC);
     mvwprintw(registros, 6, 25, "IR: %s        ", pcb->IR);
-    mvwprintw(registros, 8, 10, "Linea leida: %s        ", pcb->LineaLeida);
+    mvwprintw(registros, 8, 10, "Linea leida: %s       ", pcb->LineaLeida);
     wrefresh(registros);
 }
 
@@ -647,7 +648,7 @@ int Enter(WINDOW *mensajes, WINDOW *registros, char *comando, PCB *pcb, FILE **a
         pcb->DX = 0;
         pcb->PC = 0;
         strcpy(pcb->IR, "                      ");
-        strcpy(pcb->LineaLeida, "                a");
+        strcpy(pcb->LineaLeida, "                ");
         Registros(registros, pcb);
         return 110;
     }
@@ -753,12 +754,19 @@ int main(void) {
     Registros(registros, pcb);
     FILE *archivo = 0;
     int y, x;
+    //calcular la maxima cantidad de lineas que se pueden escribir en la ventana de comandos
+    //sin que se desborde
+
+    int MaxLinea(WINDOW *comandos, int *y, int *x){
+        getmaxyx(comandos, *y, *x);
+        return *y;
+    }
 
     int i = 0;                
     while (1) {
         int codigoError = LineaComandos(comandos, mensajes, registros, comando, &j, &linea, pcb, &archivo);
         Prompt(comandos, linea, comando);
-        if (linea > 20) {
+        if (linea > (MaxLinea(comandos, &y, &x) - 3)){
             linea = 0;
             wclear(comandos);
             box(comandos, 0, 0);
@@ -770,6 +778,7 @@ int main(void) {
         if (archivo != NULL) {
             char linea[100]; // Variable para almacenar la línea leída del archivo
             if (fgets(linea, 100, archivo) != NULL) { // Leer una línea del archivo
+                Prompt(comandos, *linea, " ");
                 LeerArchivo(registros, mensajes, pcb, archivo, linea);
             } else { // Cerrar el archivo si ya no hay más líneas que leer
                 fclose(archivo);
