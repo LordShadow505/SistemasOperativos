@@ -623,16 +623,17 @@ int Enter(WINDOW *mensajes, WINDOW *registros, char *comando, PCB *pcb, FILE **a
     char param1[100] = ""; // Se inicializa con el caracter nulo para evitar que salgan cosas raras (basura)
     char param2[100] = ""; // Se inicializa con el caracter nulo para evitar que salgan cosas raras (basura)
     // -------------- SECCION DE COMANDOS ---------------
+    Mayusculainador(comando);
 
     // ---- EXIT ----
     sscanf(comando, "%s", cmd); // Leer el comando (la primera palabra del comando)
-    if ((strcmp(cmd, "salir") == 0) || (strcmp(cmd, "exit") == 0)){
+    if ((strcmp(cmd, "SALIR") == 0) || (strcmp(cmd, "EXIT") == 0)){
         return 104; // Esto sale del programa porque se regresa 0 a la función main y el ciclo se rompe
     }
 
     // ---- CARGAR ----
     sscanf(comando, "%s", cmd); // Leer el comando
-    if ((strcmp(cmd, "cargar") == 0) || (strcmp(cmd, "load") == 0)){
+    if ((strcmp(cmd, "CARGAR") == 0) || (strcmp(cmd, "LOAD") == 0)){
         sscanf(comando, "%*s %s", param1); // Leer el primer parámetro
         int resultado = Cargar(registros, mensajes, pcb, param1, archivo);
         memset(comando, 0, sizeof(comando)); // Limpiar el comando
@@ -641,7 +642,7 @@ int Enter(WINDOW *mensajes, WINDOW *registros, char *comando, PCB *pcb, FILE **a
 
     // ---- ClEAR PCB ----
     sscanf(comando, "%s", cmd);
-    if ((strcmp(cmd, "limpiar") == 0) || (strcmp(cmd, "clear") == 0)){
+    if ((strcmp(cmd, "LIMPIAR") == 0) || (strcmp(cmd, "CLEAR") == 0)){
         pcb->AX = 0;
         pcb->BX = 0;
         pcb->CX = 0;
@@ -762,6 +763,7 @@ int main(void) {
         return *y;
     }
 
+
     int i = 0;                
     while (1) {
         int codigoError = LineaComandos(comandos, mensajes, registros, comando, &j, &linea, pcb, &archivo);
@@ -773,7 +775,7 @@ int main(void) {
             mvwprintw(comandos, 0, 2, "COMANDOS");
             wrefresh(comandos);
         }
-        
+
         //Verificar si el puntero a archivo es diferente de null
         if (archivo != NULL) {
             char linea[100]; // Variable para almacenar la línea leída del archivo
