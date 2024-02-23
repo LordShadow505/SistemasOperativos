@@ -39,7 +39,7 @@ void Registros(WINDOW *registros, struct PCB *pcb) {
     mvwprintw(registros, 6, 10, "PC: %d        ", pcb->PC);
     mvwprintw(registros, 6, 25, "IR: %s        ", pcb->IR);
     mvwprintw(registros, 8, 10, "Linea leida: %s       ", pcb->LineaLeida);
-    mvwprintw(registros, 8, 25 + strlen(pcb->LineaLeida), "\0"); // Agregar terminador de cadena
+    //mvwprintw(registros, 8, 25 + strlen(pcb->LineaLeida), "\0"); // Agregar terminador de cadena
     wrefresh(registros);
 }
 
@@ -235,7 +235,7 @@ int DIV(WINDOW *mensajes, char *registro, char *valor, struct PCB *pcb){
             }
             
             else if (strcmp(registro, "AX") == 0) pcb->AX /= valor_numerico;
-            else if (strcmp(registro, "BX") == 0) {printf("Valor numerico: %d\n", valor_numerico); pcb->BX /= valor_numerico; }
+            else if (strcmp(registro, "BX") == 0) pcb->BX /= valor_numerico; 
             else if (strcmp(registro, "CX") == 0) pcb->CX /= valor_numerico;
             else if (strcmp(registro, "DX") == 0) pcb->DX /= valor_numerico;
             
@@ -259,7 +259,7 @@ int DEC(WINDOW *mensajes, char *registro, struct PCB *pcb){
 
 //================================= EJECUTAR INSTRUCCION =================================
 int EjecutarInstruccion(WINDOW *registros, WINDOW *mensajes, struct PCB *pcb, char *linea) {
-    char instruccion[100], registro[100];
+    char instruccion[100]={0}, registro[100]={0};
     char valor[100] = "";
     int codigoError = 0;
 
@@ -677,6 +677,7 @@ int Enter(WINDOW *mensajes, WINDOW *registros, char *comando, struct PCB *pcb, F
         strcpy(pcb->IR, "                      ");
         strcpy(pcb->LineaLeida, "                ");
         Registros(registros, pcb);
+        free(pcb);
         return 110;
     }
 
@@ -691,7 +692,7 @@ int LineaComandos(WINDOW *comandos, WINDOW *mensajes, WINDOW *registros, char *c
         caracter = getch(); // Leer la tecla presionada (caracter)
         if (caracter != ERR) { // Verificar si se presionó una tecla
             if (caracter == '\n') { // Verificar si la tecla fue Enter
-                comando[*j] = '\0'; // Finalizar el comando
+                comando[*j] = '\0'; // Borra el salto de línea/Enter 
                 int codigoError = Enter(mensajes, registros, comando, pcb, archivo, linea);
                 *j = 0; // Reiniciar el contador de caracteres
                 (*linea)++; // Incrementar el contador de líneas
@@ -788,7 +789,6 @@ int main(void) {
         return *y;
     }
 
-
     int i = 0;                
     while (1) {
         int codigoError = LineaComandos(comandos, mensajes, registros, comando, &j, &linea, pcb, &archivo);
@@ -802,8 +802,8 @@ int main(void) {
         }
 
         //Verificar si el puntero a archivo es diferente de null
-        if (archivo != NULL) {
-            char linea[100]; // Variable para almacenar la línea leída del archivo
+        if (archivo != NULL) { // Si el archivo existe y esta abierto
+            char linea[100]={0}; // Variable para almacenar la línea leída del archivo
             if (fgets(linea, 100, archivo) != NULL) { // Leer una línea del archivo
                 Prompt(comandos, *linea, " ");
                 LeerArchivo(registros, mensajes, pcb, archivo, linea);
