@@ -795,11 +795,13 @@ int Enter(WINDOW *mensajes, WINDOW *registros, char *comando, PCB *pcb, FILE **a
     }
 
 
+    // INSERTA command
     sscanf(comando, "%s", cmd); // Leer el comando
     Mayusculainador(cmd);
     if ((strcmp(cmd, "INSERTA") == 0) || (strcmp(cmd, "INSERT") == 0)){
         param1[0] = '\0';
         sscanf(comando, "%*s %s", param1); // Leer el primer parámetro
+
         // Crear un nuevo nodo de PCB
         struct PCB *nuevoNodo = (struct PCB*)malloc(sizeof(struct PCB));
         nuevoNodo->PID = PIDsig();
@@ -835,22 +837,58 @@ int Enter(WINDOW *mensajes, WINDOW *registros, char *comando, PCB *pcb, FILE **a
             return 0;
         }
 
-        struct PCB* primerNodo = lista_pcb; // Guarda referencia al primer nodo
-        lista_pcb = primerNodo->sig; // Avanza la cabeza al siguiente nodo
-
+        struct PCB* primerNodo = lista_pcb;
+        lista_pcb = primerNodo->sig; 
         strcpy(pcb->fileName, primerNodo->fileName);
         strcpy(pcb->LineaLeida, primerNodo->LineaLeida);
 
-        // Cerrar el archivo del primer nodo
+
         fclose(primerNodo->programa);
 
-        // Liberar la memoria del primer no
         free(primerNodo);
 
-        CargarLista(registros, mensajes, pcb, pcb->fileName, archivo, LineaArchivo);
+        int resultado = Cargar(registros, mensajes, pcb, pcb->fileName, archivo, LineaArchivo);
 
-        return 0;
+        return resultado;
         
+    }
+
+    sscanf(comando, "%s", cmd); // Leer el comando
+    Mayusculainador(cmd);
+    if ((strcmp(cmd, "KILL") == 0) || (strcmp(cmd, "ELIMINA") == 0)){
+        param1[0] = '\0';
+        sscanf(comando, "%*s %s", param1); // Leer el primer parámetro
+        int pid = atoi(param1);
+        if (lista_pcb == NULL) {
+        return 1;
+    }
+
+    if ((lista_pcb)->PID == pid) {
+        struct PCB *temp = lista_pcb; 
+        lista_pcb = lista_pcb->sig; 
+        free(temp);
+        return 0;
+    }
+
+
+    struct PCB *actual = lista_pcb;
+    struct PCB *anterior = NULL;
+
+    while (actual != NULL && actual->PID != pid) {
+        anterior = actual;
+        actual = actual->sig;
+    }
+
+   
+    if (actual != NULL) {
+        anterior->sig = actual->sig; 
+        free(actual); 
+        
+    } else {
+        return -1;
+    }
+
+    return 0;
     }
 
 
