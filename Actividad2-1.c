@@ -47,23 +47,33 @@ void Registros(WINDOW *registros, PCB *pcb) {
     box(registros, 0, 0);
 }
 
-void ImprimirLista(WINDOW *lista) {
+
+void ImprimirLista(WINDOW *lista, PCB **lista_pcb) {
     int height, width;
     getmaxyx(stdscr, height, width);
     wbkgd(lista, COLOR_PAIR(4));
     box(lista, 0, 0);
     mvwprintw(lista, 0, 2, "LISTA");
     mvwprintw(lista, 2, 5, "Lista = ");
-    PCB *temp = lista_pcb;
-    int SaltoLinea = 4;
-    while (temp != NULL) {
-        mvwprintw(lista, SaltoLinea, 5, "PID: %d, Nombre del programa: %s", temp->PID, temp->fileName);
-        temp = temp->sig;
+    mvwprintw(lista, 3, 5, "PID | Nombre del archivo");
+    mvwprintw(lista, 4, 5, "----|-------------------");
+    int SaltoLinea = 5;
+    int i = 0;
+    if (*lista_pcb == NULL) {
+        mvwprintw(lista, SaltoLinea, 5, "Lista vacía");
         SaltoLinea++;
     }
-
+    for (PCB *actual = *lista_pcb; actual != NULL; actual = actual->sig) {
+        mvwprintw(lista, SaltoLinea, 5, "%d   | %s           ", actual->PID, actual->fileName);
+        SaltoLinea++;
+        i++;
+    }
+   
+    for (; SaltoLinea < height; SaltoLinea++) {
+        mvwprintw(lista, SaltoLinea, 5, "                               ");
+    }
+   
     wrefresh(lista);
-    box(lista, 0, 0);
 }
 
 
@@ -696,6 +706,35 @@ int LeerArchivo(WINDOW *registros,WINDOW *mensajes, PCB *pcb, FILE *archivo, cha
         return 1;
 }
 
+
+int CargarLista(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *nombre_archivo, FILE **archivo, char *LineaArchivo) {
+    if (nombre_archivo[0] == '\0') { // Esto significa que no se ingresó un nombre de archivo
+        return 101;
+    }
+
+    *archivo = fopen(nombre_archivo, "r"); // Abrir el archivo en modo lectura
+    if (*archivo == NULL) { // Si el archivo no existe
+        return 102;
+    } else {
+        // Crear un nuevo nodo PCB
+        PCB *nuevoNodo = listaCreaNodo(nombre_archivo);
+        if (nuevoNodo == NULL) {
+            fclose(*archivo);
+            return 102; // Error al crear el nodo
+        }
+        // Asignar un PID al nuevo nodo
+        asignarPID(nuevoNodo);
+        // Insertar el nodo en la lista
+        listaInsertarFinal(nuevoNodo);
+        // Actualizar los registros y mensajes
+        strcpy(pcb->IR, LineaArchivo);
+        Registros(registros, pcb);
+    }
+
+    pcb->PC = 0; // Inicializar PC en 0
+    return 0; // Regresar 0 significa que no hubo errores
+}
+
 int Cargar(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *nombre_archivo, FILE **archivo, char *LineaArchivo) {
     if (nombre_archivo[0] == '\0') { // Esto significa que no se ingresó un nombre de archivo
         return 101;
@@ -724,6 +763,10 @@ int Cargar(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *nombre_archivo, 
     return 0; // Regresar 0 significa que no hubo errores
 }
 
+int PIDsig() {
+    static int PID = 0;
+    return PID++;
+}
 
 int Enter(WINDOW *mensajes, WINDOW *registros, char *comando, PCB *pcb, FILE **archivo, char *LineaArchivo) {
     char cmd[100];
@@ -752,43 +795,62 @@ int Enter(WINDOW *mensajes, WINDOW *registros, char *comando, PCB *pcb, FILE **a
     }
 
 
-
     sscanf(comando, "%s", cmd); // Leer el comando
     Mayusculainador(cmd);
     if ((strcmp(cmd, "INSERTA") == 0) || (strcmp(cmd, "INSERT") == 0)){
         param1[0] = '\0';
         sscanf(comando, "%*s %s", param1); // Leer el primer parámetro
-        PCB *nuevoNodo = listaCreaNodo(param1);
-        if (nuevoNodo == NULL) {
-            return 102; // Error al crear el nodo
-        }
-        //Establecer el PID correspondiente (PID del nodo creado previamente +1)
-        asignarPID(nuevoNodo);
-        //Establecer registros #X en 0.
+        // Crear un nuevo nodo de PCB
+        struct PCB *nuevoNodo = (struct PCB*)malloc(sizeof(struct PCB));
+        nuevoNodo->PID = PIDsig();
         nuevoNodo->AX = 0;
         nuevoNodo->BX = 0;
         nuevoNodo->CX = 0;
         nuevoNodo->DX = 0;
-        //Establecer IR como cadena vacía.
-        strcpy(nuevoNodo->IR, "");
-        //Establecer fileName como <fileName>
+        nuevoNodo->PC = 0;
         strcpy(nuevoNodo->fileName, param1);
-        //Establecer programa, como el puntero hacia el archivo <fileName> abierto en modo lectura.
-        nuevoNodo->programa = fopen(param1, "r");
-        if (nuevoNodo->programa == NULL) {
-            return 102; // Error al abrir el archivo
+        strcpy(nuevoNodo->IR, "    ");
+        nuevoNodo->programa = fopen(nuevoNodo->fileName, "r");
+        nuevoNodo->sig = NULL; 
+        if (lista_pcb == NULL) {
+            lista_pcb = nuevoNodo;
+            return;
         }
-        //Establecer sig como NULL (0).
-        nuevoNodo->sig = NULL;
-        // retornar el puntero al nodo PCB creado
-        listaInsertarFinal(nuevoNodo);
-        //enviar el nodo recién creado a una función listaInsertarFinal
-        //manda un mensaje a la ventana de mensajes indicando el nodo
-        // que ha sido insertado en la lista, en imprimir lista
-        // debera imprimir el nodo->PID y el nodo->fileName
-        Mensajes(mensajes, "Nodo insertado en la lista");
-        
+
+        struct PCB *ultimoNodo = lista_pcb;
+        while (ultimoNodo->sig != NULL) {
+            ultimoNodo = ultimoNodo->sig;
+        }
+
+        ultimoNodo->sig = nuevoNodo;
+
         return 0;
+    }
+
+
+    sscanf(comando, "%s", cmd); // Leer el comando
+    Mayusculainador(cmd);
+    if ((strcmp(cmd, "PULL") == 0) || (strcmp(cmd, "EXTRAE") == 0)){
+        if (lista_pcb == NULL) {
+            return 0;
+        }
+
+        struct PCB* primerNodo = lista_pcb; // Guarda referencia al primer nodo
+        lista_pcb = primerNodo->sig; // Avanza la cabeza al siguiente nodo
+
+        strcpy(pcb->fileName, primerNodo->fileName);
+        strcpy(pcb->LineaLeida, primerNodo->LineaLeida);
+
+        // Cerrar el archivo del primer nodo
+        fclose(primerNodo->programa);
+
+        // Liberar la memoria del primer no
+        free(primerNodo);
+
+        CargarLista(registros, mensajes, pcb, pcb->fileName, archivo, LineaArchivo);
+
+        return 0;
+        
     }
 
 
@@ -929,7 +991,7 @@ int main(void) {
     PCB *pcb = (PCB*)malloc(sizeof(PCB)); // Reservar memoria para la estructura PCB
     //memset(pcb, 0, sizeof(PCB)); // Inicializar la estructura a 0, para evitar basura
     // Insertar el nodo PCB en la lista
-
+    listaInsertarFinal(pcb);
 
     Prompt(comandos, NumLineas, comando);
 
@@ -949,7 +1011,7 @@ int main(void) {
             wrefresh(comandos);
         }
 
-        ImprimirLista(lista);
+        ImprimirLista(lista, &lista_pcb);
 
         //Verificar si el puntero a archivo es diferente de null
         if (archivo != NULL) {
