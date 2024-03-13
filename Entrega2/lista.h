@@ -160,7 +160,16 @@ void Insertar(struct PCB **PrimerNodo, char *nombrePrograma) {
         return;
     }
     strcpy(nuevoNodo->fileName, nombrePrograma);
+
+    nuevoNodo->AX = 0;
+    nuevoNodo->BX = 0;
+    nuevoNodo->CX = 0;
+    nuevoNodo->DX = 0;
+    nuevoNodo->PC = 0;
+    strcpy(nuevoNodo->IR, "");
+    
     nuevoNodo->sig = NULL;
+    
 
     if (*PrimerNodo == NULL) {
         *PrimerNodo = nuevoNodo;

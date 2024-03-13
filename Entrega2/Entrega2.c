@@ -810,6 +810,10 @@ void ManejadorProcesos(WINDOW *IDventanaMensajes, struct PCB **Listos, struct PC
             *ProcesoCargado = 1;
             *SePuedeLeer = 1;
         }
+        else{
+            *ProcesoCargado = 0;
+            *SePuedeLeer = 0;
+        }
     }
     
     if (*ProcesoCargado == 1)
