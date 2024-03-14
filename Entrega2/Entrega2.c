@@ -275,6 +275,7 @@ void ImprimirTerminados(WINDOW *IDventanaProcesos, struct PCB *PrimerNodo)
  * - Opción 341: Mensaje de error para parámetro no entero en el comando "kill".
  * - Opción 141: Mensaje de error para comando no reconocido.
  * 
+ * 
  * Retorno:
  * - 0: Indica que no se requiere realizar ninguna acción adicional.
  * - 201: Indica que se debe ejecutar el comando "load".
@@ -352,7 +353,7 @@ int ManejadorErroresComandos(WINDOW *IDventanaPrompt, WINDOW *IDventanaMensajes,
     
     case 342:
         VentanaMensajes(IDventanaMensajes, "                                                                        ");
-        VentanaMensajes(IDventanaMensajes, "Error: Se ingresaron demasiados parametros, uso: kill <PID>");
+        VentanaMensajes(IDventanaMensajes, "Error: Hay demasiados parametros, uso: kill <numero de PID>");
         memset(ComandoIngresado, 0, (*j));
         (*j) = 0;
         VentanaPrompt(IDventanaPrompt, *NumLinea, ComandoIngresado);
@@ -810,7 +811,7 @@ void ManejadorProcesos(WINDOW *IDventanaMensajes, struct PCB **Listos, struct PC
       if (EstadoProcesos != 0)
       {
         ManejadorErroresEjecucion(IDventanaMensajes, 1);
-        
+
       }
       else
       {
