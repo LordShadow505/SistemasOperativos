@@ -12,6 +12,7 @@ char PIDKill[200]; //
 int MAXQUANTUM = 5;
 int Delay = 300000;
 int codigoError = 0;
+int ContadorHistorial  = 0;
 
 /**
  * VentanaMensajes
@@ -489,16 +490,14 @@ void ManejadorErroresArchivo(WINDOW *IDventanaMensajes, char linea[100], int Opc
         strcat(Frase, p1);
         strcat(Frase, " ");
         strcat(Frase, p2);
+        strcat(Frase, " ");
+        strcat(Frase, "+ ?");
         VentanaMensajes(IDventanaMensajes, Frase);
         break;
     case 408:
         VentanaMensajes(IDventanaMensajes, "                                                                        ");
         strncpy(Frase, "Error: Falta un registro o valor en la instruccion >>", 100);
         strcat(Frase, operacion);
-        strcat(Frase, " ");
-        strcat(Frase, p1);
-        strcat(Frase, " ");
-        strcat(Frase, p2);
         VentanaMensajes(IDventanaMensajes, Frase);
         break;
     case 409:
@@ -655,9 +654,9 @@ int Enter(char *ComandoIngresado)
     }
 
     // Convertir el PID a entero (asumiendo que param1 contiene un número válido)
-    else if (atoi(param1)) {
+    else if (atoi(param1)){
       strcpy(PIDKill, param1); // Guardar el PID del proceso a eliminar
-      return 301; // Proceso eliminado exitosamente (asumiendo la implementación de la eliminación)
+      return 301; // Proceso eliminado exitosamente
     }
 
     else {
@@ -793,57 +792,63 @@ int LeerArchivo(WINDOW *IDventanaMensajes, WINDOW *IDventanaRegistros, struct PC
  */
 void ManejadorProcesos(WINDOW *IDventanaMensajes, struct PCB **Listos, struct PCB **Terminados, struct PCB **Ejecucion, int *SePuedeLeer, int *ProcesoCargado, int EjecucionComandos, char ArchivoCargadoValido[200], int EstadoProcesos)
 {
-    if (EjecucionComandos == 201)
+  // Verifica si se está cargando un nuevo proceso.
+  if (EjecucionComandos == 201)
+  {
+    // Se carga un nuevo proceso en la lista de procesos listos.
+    strcpy(ArchivoCargadoValido, ArchivoCargado);
+    Insertar(Listos, ArchivoCargadoValido);
+  }
+  // Verifica si se está eliminando un proceso.
+  else if (EjecucionComandos == 301)
+  {
+    // Se elimina un proceso de la lista de procesos listos o de ejecución, y se coloca en la lista de procesos terminados.
+    EstadoProcesos = KillFinal(Listos, atoi(PIDKill), Terminados);
+    if (EstadoProcesos != 0)
     {
-        strcpy(ArchivoCargadoValido, ArchivoCargado);
-        Insertar(Listos, ArchivoCargadoValido);
+      EstadoProcesos = KillFinal(Ejecucion, atoi(PIDKill), Terminados);
+      if (EstadoProcesos != 0)
+      {
+        ManejadorErroresEjecucion(IDventanaMensajes, 1);
+        
+      }
+      else
+      {
+        *SePuedeLeer = 0;
+        *ProcesoCargado = 0;
+        ManejadorErroresEjecucion(IDventanaMensajes, 2);
+      }
     }
-    else if (EjecucionComandos == 301)
+  }
+  
+  // Verifica si no hay un proceso cargado.
+  if (*ProcesoCargado == 0)
+  {
+    // Si no hay un proceso cargado, se extrae el primer proceso de la lista de procesos listos y se marca como cargado y habilita la lectura.
+    *Ejecucion = listaExtraeInicio(Listos);
+    if (*Ejecucion != NULL)
     {
-        EstadoProcesos = KillFinal(Listos, atoi(PIDKill), Terminados);
-        if (EstadoProcesos != 0)
-        {
-            EstadoProcesos = KillFinal(Ejecucion, atoi(PIDKill), Terminados);
-            if (EstadoProcesos != 0)
-            {
-                EstadoProcesos = Kill(Terminados, atoi(PIDKill));
-                if (EstadoProcesos != 0)
-                {
-                    ManejadorErroresEjecucion(IDventanaMensajes, 1);
-                }
-            }
-            else
-            {
-                *SePuedeLeer = 0;
-                *ProcesoCargado = 0;
-                ManejadorErroresEjecucion(IDventanaMensajes, 2);
-            }
-        }
+      *ProcesoCargado = 1;
+      *SePuedeLeer = 1;
     }
-    
-    if (*ProcesoCargado == 0)
+    else{
+      *ProcesoCargado = 0;
+      *SePuedeLeer = 0;
+    }
+  }
+  
+  // Verifica si hay un proceso cargado y no se puede leer el archivo.
+  if (*ProcesoCargado == 1)
+  {
+    if (*SePuedeLeer == 0)
     {
-        *Ejecucion = listaExtraeInicio(Listos);
-        if (*Ejecucion != NULL)
-        {
-            *ProcesoCargado = 1;
-            *SePuedeLeer = 1;
-        }
-        else{
-            *ProcesoCargado = 0;
-            *SePuedeLeer = 0;
-        }
+      // Si hay un proceso cargado y no se puede leer el archivo, se coloca el proceso en la lista de procesos terminados y se marca como no cargado.
+      ListaInsertarFinal(Terminados, *Ejecucion);
+      *ProcesoCargado = 0;
     }
-    
-    if (*ProcesoCargado == 1)
-    {
-        if (*SePuedeLeer == 0)
-        {
-            ListaInsertarFinal(Terminados, *Ejecucion);
-            *ProcesoCargado = 0;
-        }
-    }
+  }
 }
+
 
 /**
  * LineaComandos
@@ -872,8 +877,9 @@ void ManejadorProcesos(WINDOW *IDventanaMensajes, struct PCB **Listos, struct PC
  * - Si el número de líneas supera el límite de 20, limpia todas las líneas de la ventana de comandos, restablece el número de líneas a 0 y actualiza la pantalla.
  * - Finalmente, devuelve el estado "Normal".
  */
-int LineaComandos(WINDOW *IDventanaPromt, char *ComandoIngresado, int *j, int *NumLinea)
+int LineaComandos(WINDOW *IDventanaPromt, char *ComandoIngresado, int *j, int *NumLinea, char Historial[20][100])
 {
+
   // Si hay una tecla disponible
   if (kbhit())
   {
@@ -890,6 +896,7 @@ int LineaComandos(WINDOW *IDventanaPromt, char *ComandoIngresado, int *j, int *N
       (*NumLinea)++;
 
       // Devolver el estado "Enter"
+      ContadorHistorial = 0;
       return Enter(ComandoIngresado);
     }
 
@@ -948,6 +955,29 @@ int LineaComandos(WINDOW *IDventanaPromt, char *ComandoIngresado, int *j, int *N
           {
             // Disminuir el retardo en 50000 microsegundos
             Delay = Delay - 50000;
+          }
+        }
+
+        else if (Tecla == 65)
+        {
+          ContadorHistorial++;
+          if (*NumLinea > 0 && ContadorHistorial <= *NumLinea)
+          {
+            strcpy(ComandoIngresado, Historial[*NumLinea - ContadorHistorial]);
+            *j = strlen(ComandoIngresado);
+            mvwprintw(IDventanaPromt, *NumLinea +1, 5, "                                   ");
+          }
+
+
+        }
+        else if (Tecla == 66)
+        {
+          ContadorHistorial--;
+          if (ContadorHistorial > 0)
+          {
+            strcpy(ComandoIngresado, Historial[*NumLinea - ContadorHistorial]);
+            *j = strlen(ComandoIngresado);
+            mvwprintw(IDventanaPromt, *NumLinea +1, 5, "                                   ");
           }
         }
       }
@@ -1080,7 +1110,7 @@ int main(void)
     struct PCB *Ejecucion = NULL; // Inicializar la lista de procesos en ejecución
     int Quantum = 0; // Inicializar el contador de Quantum
 
-    char ComandoIngresado[60] = {0}; // Inicializar la cadena de comandos
+    char ComandoIngresado[100] = {0}; // Inicializar la cadena de comandos
     int CharPos = 0; // Posición del cursor en la línea de comandos
     int EstadoLineaComandos = 0; // Estado de la línea de comandos
     int NumLineas = 0; // Número de líneas de comandos ingresadas
@@ -1088,31 +1118,50 @@ int main(void)
     int EjecucionComandos = 0; // Estado de la ejecución de comandos
     int ProcesoCargado = 0; // Bandera para saber si hay un proceso cargado
     int EstadoProcesos = 0; // Estado de los procesos
-    char ArchivoCargadoValido[200]; // Nombre del archivo cargado
+    char ArchivoCargadoValido[300]; // Nombre del archivo cargado
+    char HistorialComandos[10][100] = {0};     //Cadena para almacenar el historial de comandos
+    int ContadorLectura = 0; //Contador para la lectura de comandos
+    int LeerArchivoFlag = 0; // Bandera para indicar si se debe leer el archivo
+    int MaxIteraciones = 10; // número máximo de iteraciones
 
     // Ciclo principal del programa
     while (EstadoLineaComandos != 666)
     {
-        // Actualizar la ventana de línea de comandos
-        VentanaPrompt(IDventanaPromt, NumLineas, ComandoIngresado);
-        // Obtener el estado de la línea de comandos
-        EstadoLineaComandos = LineaComandos(IDventanaPromt, ComandoIngresado, &CharPos, &NumLineas);
-        // Ejecutar comandos y manejar errores
-        EjecucionComandos = ManejadorErroresComandos(IDventanaPromt, IDventanaMensajes, EstadoLineaComandos, ComandoIngresado, &CharPos, &NumLineas);
-        // Manejar procesos y ejecución de comandos
-        ManejadorProcesos(IDventanaMensajes, &Listos, &Terminados, &Ejecucion, &SePuedeLeer, &ProcesoCargado, EjecucionComandos, ArchivoCargadoValido, EstadoProcesos);
+      // Actualizar la ventana de línea de comandos
+      VentanaPrompt(IDventanaPromt, NumLineas, ComandoIngresado);
+      strcpy(HistorialComandos[NumLineas % 10], ComandoIngresado);
+      // Obtener el estado de la línea de comandos
+      EstadoLineaComandos = LineaComandos(IDventanaPromt, ComandoIngresado, &CharPos, &NumLineas, HistorialComandos);
+      // Ejecutar comandos y manejar errores
+      EjecucionComandos = ManejadorErroresComandos(IDventanaPromt, IDventanaMensajes, EstadoLineaComandos, ComandoIngresado, &CharPos, &NumLineas);
+      // Manejar procesos y ejecución de comandos
+      ManejadorProcesos(IDventanaMensajes, &Listos, &Terminados, &Ejecucion, &SePuedeLeer, &ProcesoCargado, EjecucionComandos, ArchivoCargadoValido, EstadoProcesos);
 
-        // Imprimir información de los procesos en la ventana de procesos
-        ImprimirEjecutandose(IDventanaProcesos, Ejecucion);
-        ImprimirListos(IDventanaProcesos, Listos);
-        ImprimirTerminados(IDventanaProcesos, Terminados);
-        mvwprintw(IDventanaProcesos, 7, 2, "                                                                        ");
+      // Imprimir información de los procesos en la ventana de procesos
+      ImprimirEjecutandose(IDventanaProcesos, Ejecucion);
+      ImprimirListos(IDventanaProcesos, Listos);
+      ImprimirTerminados(IDventanaProcesos, Terminados);
+      mvwprintw(IDventanaProcesos, 7, 2, "                                                                        ");
 
-        // Leer archivo si es posible
-        if (SePuedeLeer == 1)
-        { 
-            LeerArchivo(IDventanaMensajes, IDventanaRegistros, &Ejecucion, &SePuedeLeer, Ejecucion->programa, &Quantum, &ProcesoCargado, &Listos);
-        }
+
+
+    //Solo leer cada 5 iteraciones para poder escribir en la ventana de comandos
+    //sin tanto delay
+      if (SePuedeLeer == 1 && ContadorLectura < 10)
+      {
+        ContadorLectura++;
+      }
+      else if (ContadorLectura >= 10)
+      {
+        LeerArchivoFlag = 1;
+        ContadorLectura = 0;
+      }
+
+      if (LeerArchivoFlag == 1)
+      {
+        LeerArchivo(IDventanaMensajes, IDventanaRegistros, &Ejecucion, &SePuedeLeer, Ejecucion->programa, &Quantum, &ProcesoCargado, &Listos);
+        LeerArchivoFlag = 0;
+      }
     }
 
     // Finalizar el modo de pantalla de ncurses
