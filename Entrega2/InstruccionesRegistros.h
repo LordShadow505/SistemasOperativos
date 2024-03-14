@@ -174,28 +174,59 @@ int EjecutarInstruccion(WINDOW *IDventanaRegistros, WINDOW *IDventanaMensajes, s
     char instruccion[100], registro[100];
     char valor[100] = "";
     int codigoError = 0;
+    char parametroInvalido[100];
 
     // Leer la instrucción y el registro de la línea
     if (EsLineaVacia(LineaArchivo)) {
-        return 0; //Si la linea esta vacia, no hacer nada
+        return 0; // Si la línea está vacía, no hacer nada
     }
 
-    sscanf(LineaArchivo, "%s %s %s", instruccion, registro, valor);
+
+    // Si hay más de 3 parámetros, devuelve un error
+    if (sscanf(LineaArchivo, "%s %s %s %s", instruccion, registro, valor, parametroInvalido) == 4) {
+        return 406; // Si hay más de 3 parámetros, devuelve un error
+    }
+
+    //Si hay 2 o 3, entonces se leeen
+    else if(sscanf(LineaArchivo, "%s %s %s", instruccion, registro, valor) == 3){}
+    else if(sscanf(LineaArchivo, "%s %s", instruccion, registro) == 2){}
+    else if (sscanf(LineaArchivo, "%s", instruccion) == 1) {
+        // Ignorar la instrucción "END" y sus variaciones
+        if (strcasecmp(instruccion, "END") == 0) {
+            return 1; // Fin de archivo
+        }
+        return 408; // Si hay solo una instrucción distinta a "END", devuelve un error
+    }
+
+    //ahora debe verificar que instruccion sea valida
+    if (strcmp(instruccion, "MOV") != 0 &&
+        strcmp(instruccion, "ADD") != 0 &&
+        strcmp(instruccion, "SUB") != 0 &&     
+        strcmp(instruccion, "MUL") != 0 && 
+        strcmp(instruccion, "DIV") != 0 && 
+        strcmp(instruccion, "INC") != 0 && 
+        strcmp(instruccion, "DEC") != 0 && 
+        strcmp(instruccion, "END") != 0) {
+        return 401; // Si la instrucción no es válida, devuelve un error
+    }
+
+
 
     int valor_numerico = 0;
 
     strncpy(pcb->IR, LineaArchivo, sizeof(pcb->IR) - 1);
-        pcb->IR[sizeof(pcb->IR) - 1] = '\0'; 
+    pcb->IR[sizeof(pcb->IR) - 1] = '\0'; 
 
     Mayusculainador(LineaArchivo);
 
     if (strcmp(instruccion, "END") == 0) {
         strcpy(pcb->IR, LineaArchivo);
-        //VentanaRegistros(IDventanaRegistros, pcb);
+        // VentanaRegistros(IDventanaRegistros, pcb);
         codigoError = 1;
-        //ErroresInstrucciones(IDventanaMensajes, codigoError, pcb);
+        // ErroresInstrucciones(IDventanaMensajes, codigoError, pcb);
         return 1; // Fin de archivo
     }
+
 
     //================================= INSTRUCCIONES PARA MOV =================================
     else if (strcmp(instruccion, "MOV") == 0 && ( (strcmp(valor, "AX") == 0) ||
