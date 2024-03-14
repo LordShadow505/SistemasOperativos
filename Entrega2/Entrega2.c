@@ -348,6 +348,22 @@ int ManejadorErroresComandos(WINDOW *IDventanaPrompt, WINDOW *IDventanaMensajes,
         (*j) = 0;
         VentanaPrompt(IDventanaPrompt, *NumLinea, ComandoIngresado);
         break;
+    
+    case 342:
+        VentanaMensajes(IDventanaMensajes, "                                                                        ");
+        VentanaMensajes(IDventanaMensajes, "Error: Se ingresaron demasiados parametros, uso: kill <PID>");
+        memset(ComandoIngresado, 0, (*j));
+        (*j) = 0;
+        VentanaPrompt(IDventanaPrompt, *NumLinea, ComandoIngresado);
+        break;
+
+    case 343: 
+        VentanaMensajes(IDventanaMensajes, "                                                                        ");
+        VentanaMensajes(IDventanaMensajes, "Error: PID no encontrado");
+        memset(ComandoIngresado, 0, (*j));
+        (*j) = 0;
+        VentanaPrompt(IDventanaPrompt, *NumLinea, ComandoIngresado);
+        break;
 
     // Errores de Comandos (14X)
     case 141:
@@ -600,9 +616,8 @@ int Enter(char *ComandoIngresado)
     // Intentar leer el nombre del archivo a cargar
     sscanf(ComandoIngresado, "%*s %s", param1);
 
-    char dummy[100];
     // Comprobar si se proporciona un segundo parámetro (no permitido)
-    if (sscanf(ComandoIngresado, "%*s %s %s", param1, dummy) == 2) {
+    if (sscanf(ComandoIngresado, "%*s %s %s", param1, param2) == 2) {
       return 243; // Error: se proporcionaron demasiados parámetros
     }
 
@@ -635,6 +650,10 @@ int Enter(char *ComandoIngresado)
       return 341; // Error: falta el PID del proceso
     }
 
+    else if(sscanf(ComandoIngresado, "%*s %s %s", param1, param2) == 2){
+      return 342; // Error: se proporcionaron demasiados parámetros
+    }
+
     // Convertir el PID a entero (asumiendo que param1 contiene un número válido)
     else if (atoi(param1)) {
       strcpy(PIDKill, param1); // Guardar el PID del proceso a eliminar
@@ -642,7 +661,7 @@ int Enter(char *ComandoIngresado)
     }
 
     else {
-      return 341; // Error: PID del proceso no válido
+      return 343; // Error: PID del proceso no válido
     }
   }
 
