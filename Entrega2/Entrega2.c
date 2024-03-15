@@ -331,7 +331,7 @@ int ManejadorErroresComandos(WINDOW *IDventanaPrompt, WINDOW *IDventanaMensajes,
         (*j) = 0;
         VentanaPrompt(IDventanaPrompt, *NumLinea, ComandoIngresado);
         break;
-
+        
     // Estados de Kill (30X)
     case 301: 
         VentanaMensajes(IDventanaMensajes, "                                                                        ");
@@ -419,6 +419,7 @@ void ManejadorErroresArchivo(WINDOW *IDventanaMensajes, char linea[100], int Opc
     char p1[60];
     char p2[60];
     char error[60];
+
     mvwprintw(IDventanaMensajes, 0, 2, "MENSAJES");
     VentanaMensajes(IDventanaMensajes, "                                                                        ");
     sscanf(linea, "%s %s %s %s", operacion, p1, p2, error);
@@ -446,7 +447,7 @@ void ManejadorErroresArchivo(WINDOW *IDventanaMensajes, char linea[100], int Opc
         strcat(Frase, " ");
         strcat(Frase, p1);
         strcat(Frase, " ");
-        strcat(Frase, p2);;
+        strcat(Frase, p2);
         VentanaMensajes(IDventanaMensajes, Frase);
         break;
     case 403:
@@ -499,6 +500,7 @@ void ManejadorErroresArchivo(WINDOW *IDventanaMensajes, char linea[100], int Opc
         VentanaMensajes(IDventanaMensajes, "                                                                        ");
         strncpy(Frase, "Error: Falta un registro o valor en la instruccion >>", 100);
         strcat(Frase, operacion);
+        
         VentanaMensajes(IDventanaMensajes, Frase);
         break;
     case 409:
@@ -701,6 +703,7 @@ int LeerArchivo(WINDOW *IDventanaMensajes, WINDOW *IDventanaRegistros, struct PC
     int codigoError = 0;
 
     // Lee una línea del archivo y la guarda en el IR del PCB actual.
+    // IR = Instruction Register, o sea el registro donde se guardan las instrucciones.
     // Si la lectura es exitosa (no se llega al final del archivo), se continúa.
     if (fgets((*Ejecucion)->IR, sizeof((*Ejecucion)->IR), n_archivo) != NULL)
     {
@@ -837,7 +840,8 @@ void ManejadorProcesos(WINDOW *IDventanaMensajes, struct PCB **Listos, struct PC
       *SePuedeLeer = 0;
     }
   }
-  
+
+
   // Verifica si hay un proceso cargado y no se puede leer el archivo.
   if (*ProcesoCargado == 1)
   {
@@ -1130,7 +1134,7 @@ int main(void)
     {
       // Actualizar la ventana de línea de comandos
       VentanaPrompt(IDventanaPromt, NumLineas, ComandoIngresado);
-      strcpy(HistorialComandos[NumLineas % 10], ComandoIngresado);
+
       // Obtener el estado de la línea de comandos
       EstadoLineaComandos = LineaComandos(IDventanaPromt, ComandoIngresado, &CharPos, &NumLineas, HistorialComandos);
       // Ejecutar comandos y manejar errores
@@ -1172,7 +1176,6 @@ int main(void)
     LiberarMemoria(Ejecucion);
     LiberaListos(&Listos);
     LiberaTerminados(&Terminados);
-
-
+    printf("Memoria liberada.\n");
     return 0;
 }
