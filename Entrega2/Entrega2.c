@@ -878,7 +878,7 @@ void ManejadorProcesos(WINDOW *IDventanaMensajes, struct PCB **Listos, struct PC
  * - Si el número de líneas supera el límite de 20, limpia todas las líneas de la ventana de comandos, restablece el número de líneas a 0 y actualiza la pantalla.
  * - Finalmente, devuelve el estado "Normal".
  */
-int LineaComandos(WINDOW *IDventanaPromt, char *ComandoIngresado, int *j, int *NumLinea, char Historial[20][100])
+int LineaComandos(WINDOW *IDventanaPromt, char *ComandoIngresado, int *j, int *NumLinea, char Historial[10][100])
 {
 
   // Si hay una tecla disponible
