@@ -104,9 +104,7 @@ int EsLineaVacia(const char *linea) {
 
 
 
-
-
-
+ 
 //================================= OPERACIONES =================================
 int MOV(WINDOW *IDventanaMensajes, char *registro, char *valor, struct PCB *pcb){
     int valor_numerico = ConversorStrings(IDventanaMensajes, valor, pcb);
@@ -175,7 +173,9 @@ int EjecutarInstruccion(WINDOW *IDventanaRegistros, WINDOW *IDventanaMensajes, s
     char valor[100] = "";
     int codigoError = 0;
     char parametroInvalido[100];
-
+    //Instruccion Registro Registro/Valor
+    
+    
     // Leer la instrucción y el registro de la línea
     if (EsLineaVacia(LineaArchivo)) {
         return 0; // Si la línea está vacía, no hacer nada
@@ -188,15 +188,18 @@ int EjecutarInstruccion(WINDOW *IDventanaRegistros, WINDOW *IDventanaMensajes, s
     }
 
     //Si hay 2 o 3, entonces se leeen
+    
     else if(sscanf(LineaArchivo, "%s %s %s", instruccion, registro, valor) == 3){}
     else if(sscanf(LineaArchivo, "%s %s", instruccion, registro) == 2){}
     else if (sscanf(LineaArchivo, "%s", instruccion) == 1) {
         // Ignorar la instrucción "END" y sus variaciones
         if (strcasecmp(instruccion, "END") == 0) {
+            strcpy(pcb->IR, LineaArchivo);
             return 1; // Fin de archivo
         }
         return 408; // Si hay solo una instrucción distinta a "END", devuelve un error
     }
+
 
     //ahora debe verificar que instruccion sea valida
     if (strcmp(instruccion, "MOV") != 0 &&
@@ -214,8 +217,8 @@ int EjecutarInstruccion(WINDOW *IDventanaRegistros, WINDOW *IDventanaMensajes, s
 
     int valor_numerico = 0;
 
-    strncpy(pcb->IR, LineaArchivo, sizeof(pcb->IR) - 1);
-    pcb->IR[sizeof(pcb->IR) - 1] = '\0'; 
+    strncpy(pcb->IR, LineaArchivo, sizeof(pcb->IR) - 1); // Copia la línea de instrucción en el IR
+    pcb->IR[sizeof(pcb->IR) - 1] = '\0';               // Asegura que el IR termine con un carácter nulo
 
     Mayusculainador(LineaArchivo);
 
@@ -234,7 +237,7 @@ int EjecutarInstruccion(WINDOW *IDventanaRegistros, WINDOW *IDventanaMensajes, s
                                                   (strcmp(valor, "CX") == 0) ||
                                                   (strcmp(valor, "DX") == 0) ||
                                                   (valor_numerico) == 0)) {
-
+    //MoV Ax -12                                                    
         valor_numerico = EsDigito(valor); // Comprueba si el valor es un registro o un número
         
         // Si el valor es un número, entonces se puede hacer la operacion
@@ -245,6 +248,7 @@ int EjecutarInstruccion(WINDOW *IDventanaRegistros, WINDOW *IDventanaMensajes, s
 
         // Si el valor es un registro, entonces se debe comprobar si es un registro válido
         // Si el registro es válido, entonces se puede hacer la operación
+        //MoV Ax Riata 
         else if (valor_numerico == 0) {
 
             if      (strcmp(valor, "AX") == 0) { valor_numerico = pcb->AX; MOV(IDventanaMensajes, registro, valor, pcb);}
