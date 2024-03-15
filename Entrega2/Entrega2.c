@@ -104,7 +104,6 @@ void VentanaRegistros(WINDOW *IDventanaRegistros, struct PCB *pcb)
     mvwprintw(IDventanaRegistros, 8, 5, "PID: %d        ", pcb->PID);
     mvwprintw(IDventanaRegistros, 10, 5, "NAME: %s        ", pcb->fileName);
     mvwprintw(IDventanaRegistros, 15, 5, "DELAY: %d        ", Delay);
-    mvwprintw(IDventanaRegistros, 17, 5, "Codigo de Error: %d        ", codigoError);
     wrefresh(IDventanaRegistros);
     box(IDventanaRegistros, 0, 0);
 }
