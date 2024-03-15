@@ -1,3 +1,0 @@
-MOV AX 2
-DIV AX 0
-MOV BX 1
