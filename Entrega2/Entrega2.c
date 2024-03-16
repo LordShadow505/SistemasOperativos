@@ -136,12 +136,10 @@ void ImprimirEjecutandose(WINDOW *IDventanaProcesos, struct PCB *PrimerNodo)
     if (primerNodo != NULL)
     {
         wbkgd(IDventanaProcesos, COLOR_PAIR(4));
-        box(IDventanaProcesos, 0, 0);
         mvwprintw(IDventanaProcesos, 0, 2, "LISTA DE PROCESOS");
         mvwprintw(IDventanaProcesos, 2, 2, "Proceso en Ejecucion: ");
         mvwprintw(IDventanaProcesos, 3, 2, "PID: %d, FileName: %s, AX: %d, BX: %d, CX: %d, DX: %d, PC: %d, IR: %s", primerNodo->PID, primerNodo->fileName, primerNodo->AX, primerNodo->BX, primerNodo->CX, primerNodo->DX, primerNodo->PC, primerNodo->IR);
         wrefresh(IDventanaProcesos);
-        box(IDventanaProcesos, 0, 0);
     }
 }
 
@@ -170,7 +168,6 @@ void ImprimirListos(WINDOW *IDventanaProcesos, struct PCB *PrimerNodo)
     if (NodoActual != NULL)
     {
         wbkgd(IDventanaProcesos, COLOR_PAIR(4));
-        box(IDventanaProcesos, 0, 0);
         mvwprintw(IDventanaProcesos, 0, 2, "LISTA DE PROCESOS");
         mvwprintw(IDventanaProcesos, 10, 2, "Procesos en Espera");
         while (NodoActual != NULL)
@@ -189,7 +186,6 @@ void ImprimirListos(WINDOW *IDventanaProcesos, struct PCB *PrimerNodo)
         }
 
         wrefresh(IDventanaProcesos);
-        box(IDventanaProcesos, 0, 0);
     }
     else if (NodoActual == NULL)
     {
@@ -221,8 +217,7 @@ void ImprimirTerminados(WINDOW *IDventanaProcesos, struct PCB *PrimerNodo)
 
     if (NodoActual != NULL)
     {
-        wbkgd(IDventanaProcesos, COLOR_PAIR(4));                              // Establecer el color de fondo de la ventana
-        box(IDventanaProcesos, 0, 0);                                         // Dibujar el borde de la ventana
+        wbkgd(IDventanaProcesos, COLOR_PAIR(4));                              // Establecer el color de fondo de la ventana                                      // Dibujar el borde de la ventana
         mvwprintw(IDventanaProcesos, 0, 2, "LISTA DE PROCESOS");              // Título
         mvwprintw(IDventanaProcesos, height / 2, 2, "Procesos Terminados: "); // Título de la sección de procesos terminados
 
@@ -236,8 +231,72 @@ void ImprimirTerminados(WINDOW *IDventanaProcesos, struct PCB *PrimerNodo)
         }
 
         wrefresh(IDventanaProcesos);  // Actualizar la ventana
-        box(IDventanaProcesos, 0, 0); // Volver a dibujar el borde de la ventana
+    
     }
+}
+
+
+/**
+ * ImprimirHistorial
+ * 
+ * Parámetros:
+ * - IDventanaProcesos: Puntero a la ventana de procesos.
+ * - Historial: Arreglo de cadenas de caracteres que contiene el historial de comandos.
+ * - ContadorHistorial: Contador de comandos ingresados.
+ * 
+ * Objetivo:
+ * - Imprimir el historial de comandos en la ventana de procesos.
+ * 
+ * Descripción:
+ * - Esta función muestra el historial de comandos en la ventana de procesos.
+ * - La información impresa incluye el número de línea y el comando ingresado.
+ * - La ventana de procesos se actualiza y se vuelve a dibujar el borde después de imprimir la información.
+ */
+void ImprimirProcesosDistintos(WINDOW *IDventanaProcesos, struct PCB *NodosEjecucion, struct PCB *NodosListos) {
+    int height, width;
+    getmaxyx(stdscr, height, width); // Obtener las dimensiones de la pantalla
+
+    int contador = 0; // Contador de procesos distintos
+
+    // Recorrer los nodos de ejecución
+    while (NodosEjecucion != NULL) {
+        // Verificar si el proceso actual ya se ha contado
+        int procesoYaContado = 0;
+        struct PCB *temp = NodosListos;
+        while (temp != NULL) {
+            if (strcmp(NodosEjecucion->fileName, temp->fileName) == 0) {
+                procesoYaContado = 1;
+                break;
+            }
+            temp = temp->sig; // Avanzar al siguiente nodo
+        }
+        if (!procesoYaContado) {
+            contador++;
+        }
+        NodosEjecucion = NodosEjecucion->sig; // Avanzar al siguiente nodo
+    }
+
+    // Recorrer los nodos listos
+    while (NodosListos != NULL) {
+        // Verificar si el proceso actual ya se ha contado
+        int procesoYaContado = 0;
+        struct PCB *temp = NodosListos->sig;
+        while (temp != NULL) {
+            if (strcmp(NodosListos->fileName, temp->fileName) == 0) {
+                procesoYaContado = 1;
+                break;
+            }
+            temp = temp->sig; // Avanzar al siguiente nodo
+        }
+        if (!procesoYaContado) {
+            contador++;
+        }
+        NodosListos = NodosListos->sig; // Avanzar al siguiente nodo
+    }
+
+    // Imprimir la cantidad de procesos distintos
+    mvwprintw(IDventanaProcesos, 1, 2, "Programas Diferentes: %d", contador);
+    wrefresh(IDventanaProcesos); // Refrescar la ventana
 }
 
 
@@ -656,7 +715,7 @@ int Enter(char *ComandoIngresado)
     }
 
     // Convertir el PID a entero (asumiendo que param1 contiene un número válido)
-    else if (atoi(param1)){
+    else if (atoi(param1) || strcmp(param1, "0") == 0){
       strcpy(PIDKill, param1); // Guardar el PID del proceso a eliminar
       return 301; // Proceso eliminado exitosamente
     }
@@ -1145,6 +1204,7 @@ int main(void)
       ImprimirEjecutandose(IDventanaProcesos, Ejecucion);
       ImprimirListos(IDventanaProcesos, Listos);
       ImprimirTerminados(IDventanaProcesos, Terminados);
+      ImprimirProcesosDistintos(IDventanaProcesos, Ejecucion, Listos);
       mvwprintw(IDventanaProcesos, 7, 2, "                                                                        ");
 
 

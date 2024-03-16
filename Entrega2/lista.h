@@ -31,12 +31,12 @@
  * - Retorna el puntero al primer nodo extraído.
  */
 struct PCB* listaExtraeInicio(struct PCB **PrimerNodo) {
-    if (*PrimerNodo == NULL) {
+    if (*PrimerNodo == NULL) { //Si la lista está vacía, retorna NULL
         return NULL;
     }
 
-    struct PCB* primerNodo = *PrimerNodo;
-    *PrimerNodo = primerNodo->sig;
+    struct PCB* primerNodo = *PrimerNodo; //Si la lista no está vacía, extrae el primer nodo de la lista
+    *PrimerNodo = primerNodo->sig; //Actualiza el puntero al primer nodo
     return primerNodo;
 }
 
@@ -149,17 +149,17 @@ void InsertarNuevo(struct PCB **PrimerNodo, struct PCB *ejecucion) {
  */
 int contadorPID = 0;
 void Insertar(struct PCB **PrimerNodo, char *nombrePrograma) {
-    struct PCB *nuevoNodo = (struct PCB*)malloc(sizeof(struct PCB));
-    if(nuevoNodo == NULL){
+    struct PCB *nuevoNodo = (struct PCB*)malloc(sizeof(struct PCB)); //Reservar memoria para el nuevo nodo
+    if(nuevoNodo == NULL){ //Si no se pudo reservar memoria, no se inserta el nodo
         return;
     }
     nuevoNodo->PID = contadorPID++;
     nuevoNodo->programa = fopen(nombrePrograma, "r");
-    if (nuevoNodo->programa == NULL) {
+    if (nuevoNodo->programa == NULL) { //Si no se pudo abrir el archivo, no se inserta el nodo
         free(nuevoNodo);
         return;
     }
-    strcpy(nuevoNodo->fileName, nombrePrograma);
+    strcpy(nuevoNodo->fileName, nombrePrograma); //Copia el nombre del archivo en el nodo
 
     nuevoNodo->AX = 0;
     nuevoNodo->BX = 0;
@@ -168,15 +168,15 @@ void Insertar(struct PCB **PrimerNodo, char *nombrePrograma) {
     nuevoNodo->PC = 0;
     strcpy(nuevoNodo->IR, "");
     
-    nuevoNodo->sig = NULL;
+    nuevoNodo->sig = NULL; //El nuevo nodo se convierte en el último nodo de la lista
     
 
-    if (*PrimerNodo == NULL) {
+    if (*PrimerNodo == NULL) { //Si la lista está vacía, el nuevo nodo se convierte en el primer nodo
         *PrimerNodo = nuevoNodo;
         return;
     }
 
-    struct PCB *Ultimo = *PrimerNodo;
+    struct PCB *Ultimo = *PrimerNodo; //Si la lista no está vacía, se recorre hasta el último nodo
     while (Ultimo->sig != NULL) {
         Ultimo = Ultimo->sig;
     }

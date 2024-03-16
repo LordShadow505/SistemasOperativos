@@ -25,12 +25,41 @@ struct PCB
 //================================= MOUSEKEHERRAMIENTAS MISTERIOSAS =================================
 
 //================================= LIBERAR ===============================================
+/*
+ * LiberarMemoria
+ * 
+ * Parámetros:
+ * - pcb: Puntero a la estructura del PCB
+ * 
+ * Objetivo:
+ * - Liberar la memoria reservada para la estructura del PCB
+ * - 
+ * Descripción:
+ * - Libera la memoria reservada para la estructura del PCB
+ 
+
+ */
 void LiberarMemoria (struct PCB *pcb){
     free(pcb);
 }
 
 
 //================================= ABRIR Y VERIFICAR =================================
+/*
+ * AbrirYVerificar
+ * 
+ * Parámetros:
+ * - archivo: Nombre del archivo a abrir
+ * 
+ * Objetivo:
+ * - Abrir un archivo y verificar si se abrió correctamente
+ * 
+ * Descripción:
+ * - Abre el archivo en modo lectura
+ * - Verifica si el archivo se abrió correctamente
+ * - Devuelve un código de error si no se pudo abrir el archivo
+ * - Devuelve 0 si el archivo se abrió correctamente
+ */
 int AbrirYVerificar(char archivo[100]){
     FILE *NombreArchivo;
     char Linea[100];
@@ -43,7 +72,29 @@ int AbrirYVerificar(char archivo[100]){
 
     return 0;
 }
+
+
 //================================= CONVERSOR DE STRINGS =================================
+/*
+ * ConversorStrings
+ * 
+ * Parámetros:
+ * - VentanaMensajes: Ventana de mensajes
+ * - valor: Valor a convertir
+ * - pcb: Puntero a la estructura del PCB
+ * 
+ * Valor de retorno:
+ * - Si valor es un número, devuelve el valor convertido a entero
+ * - Si valor es un registro del PCB, devuelve el valor correspondiente
+ * - Si valor no es un número ni un registro del PCB, devuelve un código de error
+ * 
+ * Objetivo:
+ * - Convertir un valor a entero
+ * - 
+ * Descripción:
+ * - Si valor es un número, conviértelo a entero o explota si no es un número
+ * - Si valor es un registro del PCB, asigna su valor correspondiente
+ */
 int ConversorStrings(WINDOW *IDventanaMensajes, char *valor,struct PCB *pcb) {
     int valor_numerico = 0;
     int codigoError = 0;
@@ -69,6 +120,22 @@ int ConversorStrings(WINDOW *IDventanaMensajes, char *valor,struct PCB *pcb) {
 
 
 //================================= COMPROBADOR DE DIGITOS =================================
+/*
+ * EsDigito
+ * 
+ * Parámetros:
+ * - valor: Valor a comprobar
+ * 
+ * Valor de retorno:
+ * - 1 si el valor es un número
+ * - 0 si el valor no es un número
+ * 
+ * Objetivo:
+ * - Comprobar si un valor es un número
+ * - 
+ * Descripción:
+ * - Comprueba si el valor es un número, incluyendo números negativos
+ */
 int EsDigito(char *valor){
     int i = 0;
     if(valor[0] == '-'){
@@ -83,6 +150,21 @@ int EsDigito(char *valor){
 }
 
 //================================= MAYUSCULAINADOR INADOR =================================
+/*
+ * Mayusculainador
+ * 
+ * Parámetros:
+ * - LineaArchivo: Línea de archivo a convertir
+ * 
+ * Valor de retorno:
+ * - Ninguno
+ * 
+ * Objetivo:
+ * - Convertir una línea de archivo a mayúsculas
+ * - 
+ * Descripción:
+ * - Convierte una línea de archivo a mayúsculas
+ */
 int Mayusculainador(char *LineaArchivo){
     int i;
     for(i = 0; LineaArchivo[i]; i++){
@@ -90,7 +172,24 @@ int Mayusculainador(char *LineaArchivo){
     }
 }
 
+
 //================================= LINEA VACIA =================================
+/*
+ * EsLineaVacia
+ * 
+ * Parámetros:
+ * - linea: Línea a comprobar
+ * 
+ * Valor de retorno:
+ * - 1 si la línea está vacía
+ * - 0 si la línea no está vacía
+ * 
+ * Objetivo:
+ * - Comprobar si una línea está vacía
+ * - 
+ * Descripción:
+ * - Comprueba si una línea está vacía, es decir, si solo contiene espacios en blanco
+ */
 int EsLineaVacia(const char *linea) {
     while (*linea != '\0') {
         if (!isspace(*linea)) {
@@ -106,6 +205,24 @@ int EsLineaVacia(const char *linea) {
 
  
 //================================= OPERACIONES =================================
+/*
+* MOV
+* 
+* Parámetros:
+* - IDventanaMensajes: Ventana de mensajes
+* - registro: Registro de destino
+* - valor: Valor a mover
+* - pcb: Puntero a la estructura del PCB
+* 
+* Valor de retorno:
+* - Ninguno
+* 
+* Objetivo:
+* - Realizar la operación MOV
+* - 
+* Descripción:
+* - Mueve un valor a un registro del PCB 
+*/
 int MOV(WINDOW *IDventanaMensajes, char *registro, char *valor, struct PCB *pcb){
     int valor_numerico = ConversorStrings(IDventanaMensajes, valor, pcb);
         if (strcmp(registro, "AX") == 0) pcb->AX = valor_numerico;
@@ -114,6 +231,24 @@ int MOV(WINDOW *IDventanaMensajes, char *registro, char *valor, struct PCB *pcb)
         else if (strcmp(registro, "DX") == 0) pcb->DX = valor_numerico;
 }
 
+/*
+* ADD
+*
+* Parámetros:
+* - IDventanaMensajes: Ventana de mensajes
+* - registro: Registro de destino
+* - valor: Valor a sumar
+* - pcb: Puntero a la estructura del PCB
+*
+* Valor de retorno:
+* - Ninguno
+*
+* Objetivo:
+* - Realizar la operación ADD
+* -
+* Descripción:
+* - Suma un valor a un registro del PCB
+*/
 int ADD(WINDOW *IDventanaMensajes, char *registro, char *valor, struct PCB *pcb){
     int valor_numerico = ConversorStrings(IDventanaMensajes, valor, pcb);
         if (strcmp(registro, "AX") == 0) pcb->AX += valor_numerico;
@@ -122,6 +257,24 @@ int ADD(WINDOW *IDventanaMensajes, char *registro, char *valor, struct PCB *pcb)
         else if (strcmp(registro, "DX") == 0) pcb->DX += valor_numerico;
 }
 
+/*
+* SUB
+*
+* Parámetros:
+* - IDventanaMensajes: Ventana de mensajes
+* - registro: Registro de destino
+* - valor: Valor a restar
+* - pcb: Puntero a la estructura del PCB
+*
+* Valor de retorno:
+* - Ninguno
+*
+* Objetivo:
+* - Realizar la operación SUB
+* -
+* Descripción:
+* - Resta un valor a un registro del PCB
+*/
 int SUB(WINDOW *IDventanaMensajes, char *registro, char *valor, struct PCB *pcb){
     int valor_numerico = ConversorStrings(IDventanaMensajes, valor, pcb);
         if (strcmp(registro, "AX") == 0) pcb->AX -= valor_numerico;
@@ -130,6 +283,24 @@ int SUB(WINDOW *IDventanaMensajes, char *registro, char *valor, struct PCB *pcb)
         else if (strcmp(registro, "DX") == 0) pcb->DX -= valor_numerico;
 }
 
+/*
+* MUL
+*
+* Parámetros:
+* - IDventanaMensajes: Ventana de mensajes
+* - registro: Registro de destino
+* - valor: Valor a multiplicar
+* - pcb: Puntero a la estructura del PCB
+*
+* Valor de retorno:
+* - Ninguno
+*
+* Objetivo:
+* - Realizar la operación MUL
+* -
+* Descripción:
+* - Multiplica un valor a un registro del PCB
+*/
 int MUL(WINDOW *IDventanaMensajes, char *registro, char *valor, struct PCB *pcb){
     int valor_numerico = ConversorStrings(IDventanaMensajes, valor, pcb);
         if (strcmp(registro, "AX") == 0) pcb->AX *= valor_numerico;
@@ -138,6 +309,24 @@ int MUL(WINDOW *IDventanaMensajes, char *registro, char *valor, struct PCB *pcb)
         else if (strcmp(registro, "DX") == 0) pcb->DX *= valor_numerico;
 }
 
+/*
+* DIV
+*
+* Parámetros:
+* - IDventanaMensajes: Ventana de mensajes
+* - registro: Registro de destino
+* - valor: Valor a dividir
+* - pcb: Puntero a la estructura del PCB
+*
+* Valor de retorno:
+* - Ninguno
+*
+* Objetivo:
+* - Realizar la operación DIV
+* -
+* Descripción:
+* - Divide un valor a un registro del PCB
+*/
 int DIV(WINDOW *IDventanaMensajes, char *registro, char *valor, struct PCB *pcb){
     int valor_numerico = ConversorStrings(IDventanaMensajes, valor, pcb);
 
@@ -150,7 +339,23 @@ int DIV(WINDOW *IDventanaMensajes, char *registro, char *valor, struct PCB *pcb)
     else if (strcmp(registro, "DX") == 0) pcb->DX /= valor_numerico;
 }
 
-
+/*
+* INC
+*
+* Parámetros:
+* - IDventanaMensajes: Ventana de mensajes
+* - registro: Registro de destino
+* - pcb: Puntero a la estructura del PCB
+*
+* Valor de retorno:
+* - Ninguno
+*
+* Objetivo:
+* - Realizar la operación INC
+* -
+* Descripción:
+* - Incrementa un valor a un registro del PCB
+*/
 int INC(WINDOW *IDventanaMensajes, char *registro, struct PCB *pcb){
     if (strcmp(registro, "AX") == 0) pcb->AX++;
         else if (strcmp(registro, "BX") == 0) pcb->BX++;
@@ -158,6 +363,23 @@ int INC(WINDOW *IDventanaMensajes, char *registro, struct PCB *pcb){
         else if (strcmp(registro, "DX") == 0) pcb->DX++;
 }
 
+/* 
+* DEC
+*
+* Parámetros:
+* - IDventanaMensajes: Ventana de mensajes
+* - registro: Registro de destino
+* - pcb: Puntero a la estructura del PCB
+*
+* Valor de retorno:
+* - Ninguno
+*
+* Objetivo:
+* - Realizar la operación DEC
+* -
+* Descripción:
+* - Decrementa un valor a un registro del PCB
+*/
 int DEC(WINDOW *IDventanaMensajes, char *registro, struct PCB *pcb){
     if (strcmp(registro, "AX") == 0) pcb->AX--;
         else if (strcmp(registro, "BX") == 0) pcb->BX--;
@@ -167,7 +389,35 @@ int DEC(WINDOW *IDventanaMensajes, char *registro, struct PCB *pcb){
 //==========================================================================================
 
 
+
 //================================= EJECUTAR INSTRUCCION =================================
+/*
+* EjecutarInstruccion
+*
+* Parámetros:
+* - IDventanaRegistros: Ventana de registros
+* - IDventanaMensajes: Ventana de mensajes
+* - pcb: Puntero a la estructura del PCB
+* - LineaArchivo: Línea de archivo a ejecutar
+*
+* Valor de retorno:
+* - 0 si no hay errores
+* - 1 si se llegó al fin del archivo
+* - 401 si la instrucción no es válida
+* - 404 si se intenta dividir entre cero
+* - 406 si hay más de 3 parámetros
+* - 408 si hay solo una instrucción distinta a "END"
+*
+* Objetivo:
+* - Ejecutar una instrucción
+* -
+* Descripción:
+* - Lee la instrucción y el registro de la línea
+* - Verifica si la instrucción es válida
+* - Ejecuta la instrucción
+* - Devuelve un código de error si no se pudo ejecutar la instrucción
+*/
+
 int EjecutarInstruccion(WINDOW *IDventanaRegistros, WINDOW *IDventanaMensajes, struct PCB *pcb, char *LineaArchivo) {
     char instruccion[100], registro[100];
     char valor[100] = "";
